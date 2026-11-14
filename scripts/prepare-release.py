@@ -13,7 +13,8 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ['pyproject.toml', 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'MANIFEST.in', '.gitignore', '.gitattributes',
-          '.github/workflows/ci.yml', 'docs/execution-strategies.md', 'docs/releasing.md', 'docs/development.md',
+          '.github/workflows/ci.yml', '.github/workflows/release.yml', 'docs/releases/0.3.0a9.md',
+          'docs/execution-strategies.md', 'docs/releasing.md', 'docs/development.md',
           'docs/runtime-v2.md', 'docs/custom-kernels.md',
           'examples/direct_inference.py', 'examples/prepared_inference.py', 'tests/test_runtime_v2.py',
           'scripts/benchmark-runtime.py',

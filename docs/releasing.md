@@ -29,3 +29,18 @@ The project code uses MIT. Optional libusb patch files are licensed separately
 and excluded from PyPI archives. Runtime/compiler/SDK binaries are external;
 their upstream notices remain with their distributions. This repository does
 not redistribute model weights.
+
+## GitHub wheel releases
+
+The `publish-wheel` workflow builds a wheel from a pushed `v*` tag. Its version
+must exactly match `pyproject.toml`, and reviewed notes must exist at
+`docs/releases/<version>.md`. It audits source and wheel contents, runs Twine,
+and checks imports and CLI in a fresh environment outside the checkout before
+creating the Release. Alpha/beta/RC versions are marked as prereleases. The
+wheel and `SHA256SUMS` are attached; model weights and runtime DLLs stay external.
+
+Push a reviewed version tag only when that release is intended. Existing tags
+and Release assets are not overwritten. The workflow uses GitHub's temporary
+repository token with `contents: write`; it needs no personal access token and
+does not upload to PyPI. Workflow dispatch can rerun the workflow on a selected
+version tag; selecting a branch does not publish a release.

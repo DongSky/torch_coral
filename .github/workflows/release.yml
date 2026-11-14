@@ -1,0 +1,85 @@
+name: publish-wheel
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      SOURCE_DATE_EPOCH: '946684800'
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Install packaging tools
+        run: python -m pip install build twine
+      - name: Validate version tag
+        id: version
+        shell: python
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          import os
+          from pathlib import Path
+          import tomllib
+          from packaging.version import Version
+          version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
+          if os.environ['RELEASE_TAG'] != 'v' + version:
+              raise SystemExit('Release tag must match the package version')
+          if not Path('docs/releases', version + '.md').is_file():
+              raise SystemExit('Reviewed release notes are required')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('version=' + version + '\n')
+              output.write('prerelease=' + str(Version(version).is_prerelease).lower() + '\n')
+      - name: Audit public source
+        run: python scripts/prepare-release.py --destination release/public-source --report reports/release-source-audit.json
+      - name: Build and check wheel
+        run: |
+          python -m build --wheel
+          python -m twine check dist/*.whl
+          python scripts/prepare-release.py --audit dist/*.whl --report reports/release-wheel-audit.json
+      - name: Check installed package outside the checkout
+        shell: bash
+        run: |
+          smoke_dir="$(mktemp -d)"
+          python -m venv "$smoke_dir/env"
+          "$smoke_dir/env/bin/python" -m pip install --no-deps dist/*.whl
+          "$smoke_dir/env/bin/python" -m pip install 'numpy>=1.26,<3'
+          cd "$smoke_dir"
+          "$smoke_dir/env/bin/python" -c "import sys,torch_coral,torch_coral_runtime; assert 'torch' not in sys.modules; print(torch_coral.__version__)"
+          "$smoke_dir/env/bin/torch-coral" --help
+      - name: Generate checksum
+        shell: bash
+        run: |
+          cd dist
+          sha256sum *.whl > SHA256SUMS
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          args=(--verify-tag --title "torch-coral $VERSION" --notes-file "docs/releases/$VERSION.md")
+          if [[ "$PRERELEASE" == 'true' ]]; then
+            args+=(--prerelease --latest=false)
+          fi
+          gh release create "$RELEASE_TAG" dist/*.whl dist/SHA256SUMS "${args[@]}"
