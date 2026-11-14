@@ -38,6 +38,10 @@ the runtime and model paths in Coral Studio Settings before connecting. See
 
 Offline frontend tests do not access the USB device:
 
+On Ubuntu, even offscreen PySide6 tests need the system Qt dependencies. CI
+installs `libegl1`, `libgl1`, `libopengl0` and `libxkbcommon0` and sets
+`QT_QPA_PLATFORM=offscreen`. This does not validate Linux hardware execution.
+
 ```powershell
 .venv-torch/Scripts/python.exe -m pytest tests -q
 ```
