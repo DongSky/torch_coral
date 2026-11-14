@@ -1,0 +1,44 @@
+diff --git a/coral/device.py b/coral/device.py
+index 9fe7b20..c163067 100644
+--- a/coral/device.py
++++ b/coral/device.py
+@@ -1,6 +1,8 @@
+ # Edge TPU (Coral USB, "beagle") driver in pure python, mirrors libedgetpu driver/usb/usb_driver.cc DoOpen() in single-endpoint mode
+ from __future__ import annotations
+-import struct, time, os, fcntl, pathlib
++import struct, time, os, pathlib
++if os.name == "nt": import msvcrt
++else: import fcntl
+ from coral.usbdev import USBDevice
+ from coral.dfu import ensure_firmware, APP_VID, APP_PID
+ from coral.regs import REGS
+@@ -31,8 +33,11 @@ class EdgeTPU:
+     # one process at a time: two drivers on the same endpoints hang it. After a failed transfer: no USB port reset (it makes a
+     # wedged stick vanish until it is replugged), only a chip re-initialization that a canary program has to confirm
+     self.lock = open(LOCK, "a+")
+-    try: fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+-    except BlockingIOError: raise RuntimeError(f"the Coral is in use by another process ({LOCK.read_text().strip()})") from None
++    self.lock.seek(0)
++    try:
++      if os.name == "nt": msvcrt.locking(self.lock.fileno(), msvcrt.LK_NBLCK, 1)
++      else: fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
++    except (BlockingIOError, OSError): raise RuntimeError(f"the Coral is in use by another process ({LOCK.read_text().strip()})") from None
+     self.lock.seek(0)
+     self.lock.truncate()
+     self.lock.write(f"pid {os.getpid()}")
+@@ -150,3 +155,15 @@ class EdgeTPU:
+     assert len(ev) == 16, f"short event {ev.hex()}"
+     offset, length, tag = struct.unpack_from("<QIB", ev)
+     return tag & 0xF, offset, length
++
++
++  def close(self):
++    if getattr(self, "usb", None) is not None:
++      self.usb.close()
++      self.usb = None
++    if getattr(self, "lock", None) is not None:
++      self.lock.close()
++      self.lock = None
++
++  def __enter__(self): return self
++  def __exit__(self, *args): self.close()

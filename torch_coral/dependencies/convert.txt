@@ -1,0 +1,3 @@
+# Isolated Python 3.12 converter. This pinned package specifies its dependency set.
+# Do not enable its TensorFlow or torch extras.
+onnx2tf==2.6.9

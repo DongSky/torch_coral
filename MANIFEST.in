@@ -1,0 +1,31 @@
+include LICENSE THIRD_PARTY_NOTICES.md README.md pyproject.toml
+recursive-include torch_coral *.py *.txt
+recursive-include torch_coral_runtime *.py
+recursive-include docs *.md
+include examples/basic.py
+include examples/direct_inference.py examples/prepared_inference.py
+include tests/test_distribution.py tests/test_experimental_ops.py tests/test_operator_strategies.py
+include tests/test_runtime_v2.py
+prune .tools
+prune .gui
+prune .vscode
+prune .release-tests
+prune artifacts
+prune downloads
+prune reports
+prune native
+prune scripts
+prune requirements
+exclude tests/test_coral.py tests/test_workbench.py
+global-exclude __pycache__ *.py[cod] *.dll *.exe *.onnx *.npz *.npy *.tflite *.log .env .pypirc
+include native/tinycoral-windows.patch native/TINYCORAL-LICENSE
+include tests/test_isa_scalar.py
+include tests/test_qwen_control.py
+include tests/test_isa_mxu.py
+include tests/test_chat_metrics.py tests/test_qwen_gui.py
+include tests/test_isa_optimized.py tests/test_isa_streamed.py tests/test_isa_v2_fusions.py
+include tests/test_isa_schedule.py tests/test_speculative.py
+include tests/test_usb_buffers.py
+include tests/test_usb_dispatch.py
+include tests/test_isa_v4_fusions.py
+include tests/test_v4_compute.py tests/test_speculative_blocks.py

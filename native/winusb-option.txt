@@ -1,0 +1,14 @@
+/* SPDX-License-Identifier: LGPL-2.1-or-later
+ * torch_coral local change to libusb 1.0.29 windows_common.c.
+ * Keep the default WinUSB backend when this worker explicitly requests it.
+ * Legacy libedgetpu unconditionally requests UsbDk; its redirector can strand
+ * the device on Windows 11 (ERROR_ALREADY_EXISTS). All USB transfers still go
+ * through libusb/WinUSB. No Edge TPU computation is replaced or emulated.
+ */
+if (option == LIBUSB_OPTION_USE_USBDK) {
+    char force_winusb[2];
+    if (GetEnvironmentVariableA("TORCH_CORAL_FORCE_WINUSB", force_winusb, sizeof(force_winusb)) == 1
+            && force_winusb[0] == '1') {
+        usbi_dbg(ctx, "torch_coral: retaining native WinUSB backend");
+        return LIBUSB_SUCCESS;
+    }

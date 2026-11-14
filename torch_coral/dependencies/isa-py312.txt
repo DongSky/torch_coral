@@ -1,0 +1,8 @@
+# Isolated experimental ISA worker. Install the Windows-patched tinycoral source
+# with scripts/prepare-qwen-environment.ps1; it is intentionally not a PyPI dep.
+numpy==2.5.4
+flatbuffers==25.12.19
+gguf==0.19.0
+tokenizers==0.23.3
+jinja2>=3.1.6,<4
+tinygrad @ git+https://github.com/tinygrad/tinygrad.git@d2892164e20e9c53350abaa7e7a8cc7b7376f8d4

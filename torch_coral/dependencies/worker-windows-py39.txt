@@ -1,0 +1,5 @@
+# Google's original wheels; the similarly named PyPI pycoral project is unrelated.
+numpy==1.26.4
+Pillow==10.4.0
+pycoral @ https://github.com/google-coral/pycoral/releases/download/v2.0.0/pycoral-2.0.0-cp39-cp39-win_amd64.whl
+tflite-runtime @ https://github.com/google-coral/pycoral/releases/download/v2.0.0/tflite_runtime-2.5.0.post1-cp39-cp39-win_amd64.whl
