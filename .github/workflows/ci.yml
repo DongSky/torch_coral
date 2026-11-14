@@ -10,10 +10,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       QT_QPA_PLATFORM: offscreen
-      SOURCE_DATE_EPOCH: "0"
+      # A fixed timestamp within the ZIP date range also works on Windows.
+      SOURCE_DATE_EPOCH: "946684800"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.12"
       - run: python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.14,<2.15"
@@ -22,15 +23,15 @@ jobs:
       - run: python scripts/prepare-release.py --destination release/ci-public-source --report reports/ci-source-audit.json
       - run: python -m build
       - run: python -m twine check dist/*
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: distributions-${{ matrix.os }}
           path: dist/*
   legacy-host:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.9"
       - run: python -m pip install ".[test]"
