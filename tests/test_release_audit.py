@@ -38,3 +38,15 @@ def test_sensitive_content_is_redacted(value):
 
 def test_portable_source_is_allowed():
     audit.inspect('torch_coral/example.py', b"path = root / 'models'\n")
+
+
+@pytest.mark.parametrize('identity', ['root', 'runner', 'runneradmin'])
+def test_generic_ci_accounts_do_not_reject_portable_code(monkeypatch, identity):
+    monkeypatch.setattr(audit.getpass, 'getuser', lambda: identity)
+    audit.inspect('example.py', b'root = directory; runner = scheduler; runneradmin = False')
+
+
+def test_personal_identity_remains_blocked(monkeypatch):
+    monkeypatch.setattr(audit.getpass, 'getuser', lambda: 'local-test-identity')
+    with pytest.raises(ValueError, match='redacted'):
+        audit.inspect('example.py', b'local-test-identity')

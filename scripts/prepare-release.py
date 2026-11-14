@@ -55,6 +55,9 @@ STATIC = ['pyproject.toml', 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'M
           'scripts/prepare-release.py', 'scripts/check-pypi-name.py']
 DENIED = {'.git', '.ssh', '.tools', '.venv', '.gui', '.vscode', '.release-tests', '__pycache__', 'artifacts', 'downloads', 'reports'}
 PRIVATE_SUFFIXES = {'.dll', '.exe', '.pyc', '.pyo', '.onnx', '.tflite', '.npy', '.npz', '.log', '.gguf', '.safetensors', '.bin', '.pem', '.key'}
+# Generic service-account words are not personal identities. User-directory
+# paths and credentials are still rejected independently on these machines.
+GENERIC_ACCOUNTS = {'root', 'runner', 'runneradmin', 'system', 'administrator', 'admin', 'user'}
 
 
 def inspect(name, data):
@@ -81,7 +84,7 @@ def inspect(name, data):
                 r'[A-Za-z0-9_.+%\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}',
                 r'/' + r'home/[^\s/]+/', r'/' + r'Users/[^\s/]+/']
     identity = getpass.getuser()
-    if len(identity) > 3:
+    if len(identity) > 3 and identity.lower() not in GENERIC_ACCOUNTS:
         patterns.append(re.escape(identity))
     patterns.extend(re.escape(p) for p in (str(ROOT), ROOT.as_posix()))
     for index, pattern in enumerate(patterns):
