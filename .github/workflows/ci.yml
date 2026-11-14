@@ -5,6 +5,7 @@ permissions:
 jobs:
   package:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -19,7 +20,25 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.14,<2.15"
       - run: python -m pip install -e ".[test,release]"
-      - run: python -m pytest tests/test_distribution.py tests/test_release_audit.py tests/test_experimental_ops.py tests/test_operator_strategies.py tests/test_runtime_v2.py tests/test_usb_buffers.py tests/test_usb_dispatch.py tests/test_speculative.py tests/test_speculative_blocks.py -q
+      - name: Run offline tests
+        shell: python
+        run: |
+          import subprocess
+          import sys
+          result = subprocess.run([
+              sys.executable, '-m', 'pytest', '-q', '--tb=short',
+              'tests/test_distribution.py', 'tests/test_release_audit.py',
+              'tests/test_experimental_ops.py', 'tests/test_operator_strategies.py',
+              'tests/test_runtime_v2.py', 'tests/test_usb_buffers.py',
+              'tests/test_usb_dispatch.py', 'tests/test_speculative.py',
+              'tests/test_speculative_blocks.py',
+          ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+          print(result.stdout)
+          if result.returncode:
+              # Keep failures visible in Checks as well as the full job log.
+              message = result.stdout[-6000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error::' + message)
+          sys.exit(result.returncode)
       - run: python scripts/prepare-release.py --destination release/ci-public-source --report reports/ci-source-audit.json
       - run: python -m build
       - run: python -m twine check dist/*
